@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronos - Portal de Acceso</title>
+    <!-- Carga de Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Estilos Tron Legacy -->
+    <style>
+        :root {
+            --color-neon-cyan: #00E0FF;
+            --color-neon-blue: #0A40FF;
+            --color-bg-dark: #0D0D0D;
+            --color-border-dark: #1F2937;
+        }
+
+        body {
+            background-color: var(--color-bg-dark);
+            color: #E5E7EB;
+            font-family: 'Space Mono', 'Inter', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 224, 255, 0.3);
+            border-radius: 1rem;
+            box-shadow: 0 0 25px rgba(0, 224, 255, 0.2);
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .text-neon {
+            color: var(--color-neon-cyan);
+            text-shadow: 0 0 8px rgba(0, 224, 255, 0.8), 0 0 15px rgba(0, 224, 255, 0.4);
+        }
+
+        .btn-neon {
+            background-color: var(--color-neon-blue);
+            color: white;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px var(--color-neon-blue);
+        }
+
+        .btn-neon:hover {
+            background-color: var(--color-neon-cyan);
+            box-shadow: 0 0 20px var(--color-neon-cyan), 0 0 40px rgba(0, 224, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        input[type="text"], input[type="password"] {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 224, 255, 0.4);
+            color: white;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: var(--color-neon-cyan);
+            outline: none;
+            box-shadow: 0 0 5px var(--color-neon-cyan);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <h1 class="text-4xl text-neon font-bold mb-4 text-center">CHRONOS</h1>
+        <p class="text-gray-400 text-center mb-5" id="login-title">INICIE SESIÓN O REGISTRE SU ALIAS</p>
+
+        <div id="login-form">
+            <div class="mb-4">
+                <label for="usernameInput" class="block text-sm font-medium text-gray-300 mb-2">NOMBRE DE USUARIO (Alias)</label>
+                <input type="text" id="usernameInput" class="w-full p-3 rounded-lg focus:ring-1 focus:ring-cyan-400" placeholder="Ej: TRON_User_789" required>
+            </div>
+            <div class="mb-6">
+                <label for="passwordInput" class="block text-sm font-medium text-gray-300 mb-2">CONTRASEÑA</label>
+                <input type="password" id="passwordInput" class="w-full p-3 rounded-lg focus:ring-1 focus:ring-cyan-400" placeholder="Mínimo 6 caracteres" required>
+            </div>
+            <button id="loginButton" onclick="handleLogin()" class="btn-neon w-full py-3 rounded-lg font-semibold text-lg hover:text-black">
+                ACCEDER A LA MATRIZ
+            </button>
+            <div id="message" class="mt-4 text-center text-red-400" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Lógica de Autenticación con localStorage (simulando registro/login) -->
+    <script type="module">
+        // Elementos del DOM
+        const usernameInput = document.getElementById('usernameInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginButton = document.getElementById('loginButton');
+        const messageDisplay = document.getElementById('message');
+        const loginTitle = document.getElementById('login-title');
+
+        // Claves de localStorage
+        const USERS_KEY = 'chronos_registered_users';
+        const CURRENT_USER_KEY = 'chronos_current_user';
+
+        function displayMessage(msg, isError = true) {
+            messageDisplay.textContent = msg;
+            messageDisplay.style.display = 'block';
+            messageDisplay.className = `mt-4 text-center ${isError ? 'text-red-400' : 'text-green-400'}`;
+        }
+
+        window.handleLogin = function() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (username.length < 3) {
+                displayMessage('El alias debe tener al menos 3 caracteres.', true);
+                return;
+            }
+            if (password.length < 6) {
+                displayMessage('La contraseña debe tener al menos 6 caracteres.', true);
+                return;
+            }
+            
+            loginButton.disabled = true;
+            loginButton.textContent = 'PROCESANDO...';
+
+            try {
+                // 1. Cargar usuarios existentes
+                const usersJson = localStorage.getItem(USERS_KEY);
+                let users = usersJson ? JSON.parse(usersJson) : [];
+                
+                // 2. Buscar si el usuario ya existe
+                const existingUser = users.find(u => u.username === username);
+
+                let success = false;
+                let isNewUser = false;
+
+                if (existingUser) {
+                    // El usuario existe: Verificar contraseña
+                    if (existingUser.password === password) { 
+                        // Contraseña Correcta (Inicio de Sesión)
+                        displayMessage(`Inicio de sesión exitoso. Bienvenido, ${username}.`, false);
+                        success = true;
+                    } else {
+                        // Contraseña Incorrecta
+                        displayMessage('Error: Contraseña incorrecta para este alias.', true);
+                    }
+                } else {
+                    // El usuario NO existe: Registrar
+                    const newUser = { username, password };
+                    users.push(newUser);
+                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                    
+                    displayMessage(`Registro exitoso. Bienvenido a la Matriz, ${username}.`, false);
+                    success = true;
+                    isNewUser = true;
+                }
+
+                if (success) {
+                    // 3. Establecer el usuario actual y redirigir
+                    localStorage.setItem(CURRENT_USER_KEY, username);
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'ACCEDER A LA MATRIZ';
+                }
+
+            } catch (error) {
+                console.error("Error al acceder a localStorage:", error);
+                displayMessage('ERROR de sistema: No se pudo acceder al almacenamiento local.', true);
+                loginButton.disabled = false;
+                loginButton.textContent = 'ACCEDER A LA MATRIZ';
+            }
+        };
+
+        // Opcional: Cargar alias anterior y ajustar el título si es un usuario conocido
+        window.onload = function() {
+            const storedUsername = localStorage.getItem(CURRENT_USER_KEY);
+            if (storedUsername) {
+                usernameInput.value = storedUsername;
+                loginTitle.textContent = 'INICIE SESIÓN (USUARIO REGISTRADO)';
+            }
+        }
+    </script>
+</body>
+</html>
